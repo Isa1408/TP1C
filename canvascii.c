@@ -61,7 +61,16 @@ Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
           [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
           [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
 [...]\n"
-
+#define ERROR_MESSAGE_S_TOO_HIGH "Error: canvas is too high (max height: 40)\n\
+Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
+          [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
+          [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
+[...]\n"
+#define ERROR_MESSAGE_S_TOO_WIDE "Error: canvas is too wide (max width: 80)\n\
+Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
+          [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
+          [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
+[...]\n"
 
 struct canvas {
     char pixels[MAX_HEIGHT][MAX_WIDTH]; // A matrix of pixels
@@ -117,7 +126,7 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
     return (*canvas);
 }
 
-struct canvas isSTDIN(struct canvas *canvas);
+struct canvas isSTDIN(struct canvas *canvas, enum error *err);
 
 void count_chars_and_lines(int *line_count, int *char_count) {
     char line[4000];
@@ -131,14 +140,21 @@ void count_chars_and_lines(int *line_count, int *char_count) {
     }
 }
 
-struct canvas isSTDIN(struct canvas *canvas) {
+struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
     int line_count, char_count;
     count_chars_and_lines(&line_count, &char_count);
-    // printf(&char_count);
-    // printf(&line_count);
     (*canvas).pen = '.';
     (*canvas).height = line_count;
     (*canvas).width = char_count;
+
+    if((*canvas).height > 40){
+        (*canvas).height = 40;
+        *err = ERR_CANVAS_TOO_HIGH;
+    }
+    if((*canvas).width > 80){
+        (*canvas).width = 80;
+        *err = ERR_CANVAS_TOO_WIDE;
+    }
 
     for (int i = 0; i < (*canvas).height; i++) {
         for (int j = 0; j < (*canvas).width; j++) {
@@ -167,18 +183,27 @@ int main(int argc, char* argv[]) {
 //             }
 //             err = OK;
             if (!isatty(STDIN_FILENO)){
-                canvas = isSTDIN(&canvas);
-                can_print_canvas = true;
-                err = OK;
+                canvas = isSTDIN(&canvas, &err);
 
-                if(canvas.height > 40){
-                    canvas.height = 40;
-                    err = ERR_CANVAS_TOO_HIGH;
+                if(err == OK){
+                    can_print_canvas = true;
                 }
-                if(canvas.width > 80){
-                    canvas.width = 80;
-                    err = ERR_CANVAS_TOO_WIDE;
+                if(err == ERR_CANVAS_TOO_HIGH){
+                    fprintf(stderr, ERROR_MESSAGE_S_TOO_HIGH);
                 }
+                if(err == ERR_CANVAS_TOO_WIDE){
+                    fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
+                }
+//                err = OK;
+
+//                if(canvas.height > 40){
+//                    canvas.height = 40;
+//                    err = ERR_CANVAS_TOO_HIGH;
+//                }
+//                if(canvas.width > 80){
+//                    canvas.width = 80;
+//                    err = ERR_CANVAS_TOO_WIDE;
+//                }
             }
         }
 
@@ -222,8 +247,10 @@ int main(int argc, char* argv[]) {
                 int row;
 
                 if (!isatty(STDIN_FILENO)){
-                    canvas = isSTDIN(&canvas);
-                    can_print_canvas = true;
+                    canvas = isSTDIN(&canvas, &err);
+                    if(err == OK){
+                        can_print_canvas = true;
+                    }
                 }
 
                 if (sscanf(argv[i + 1], "%d", &row) == 1 && can_print_canvas) {
@@ -240,8 +267,10 @@ int main(int argc, char* argv[]) {
             } else if (strcmp(argv[i], "-v") == 0){
                 int col;
                 if (!isatty(STDIN_FILENO)){
-                    canvas = isSTDIN(&canvas);
-                    can_print_canvas = true;
+                    canvas = isSTDIN(&canvas, &err);
+                    if(err == OK){
+                        can_print_canvas = true;
+                    }
                 }
 
                 if (sscanf(argv[i + 1], "%d", &col) == 1) {
@@ -277,5 +306,4 @@ int main(int argc, char* argv[]) {
         }
     }
     return err;
-
 }
