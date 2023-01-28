@@ -84,7 +84,7 @@ enum error {
 struct canvas draw_horizontal_line(char pen, struct canvas *canvas, int row) {
     (*canvas).pen = pen;
     for (int i = 0; i < (*canvas).width; i++) {
-        (*canvas).pixels[i][row] = (*canvas).pen;
+        (*canvas).pixels[row][i] = (*canvas).pen;
     }
     return (*canvas);
 }
@@ -92,7 +92,7 @@ struct canvas draw_horizontal_line(char pen, struct canvas *canvas, int row) {
 struct canvas draw_vertical_line(char pen, struct canvas *canvas, int col){
     (*canvas).pen = pen;
     for (int i = 0; i < (*canvas).height; i++) {
-        (*canvas).pixels[col][i] = (*canvas).pen;
+        (*canvas).pixels[i][col] = (*canvas).pen;
     }
     return (*canvas);
 }
