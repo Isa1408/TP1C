@@ -71,6 +71,12 @@ Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
           [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
           [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
 [...]\n"
+#define ERROR_MESSAGE_R "Error: incorrect value with option -r\n\
+Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
+          [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
+          [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
+[...]\n"
+
 
 struct canvas {
     char pixels[MAX_HEIGHT][MAX_WIDTH]; // A matrix of pixels
@@ -115,11 +121,47 @@ void print_canvas(struct canvas canvas) {
     }
 }
 
+//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
+//    for (int y = y1; y <= y2; y++) {
+//        for (int x = x1; x <= x2; x++) {
+//            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
+////                (*canvas).pixels[x][y] = '7';
+//                if (y == y1 || y == y2 || x == x1 || x == x2) {
+//                    (*canvas).pixels[x][y] = '7';
+//                } else {
+//                    (*canvas).pixels[x][y] = '.';
+//                }
+//            }
+//        }
+//    }
+//    return (*canvas);
+//}
+
+//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
+//    for (int x = x1; x <= x2; x++) {
+//        for (int y = y1; y <= y2; y++) {
+//            if (x >= 0 && x <= (*canvas).width +1 && y >= 0 && y <= (*canvas).height+1) {
+//                if (y == y1 || y == y2 || x == x1 || x == x2) {
+//                    (*canvas).pixels[x][y] = '7';
+//                } else {
+//                    (*canvas).pixels[x][y] = '.';
+//                }
+//            }
+//        }
+//    }
+//    return (*canvas);
+//}
+
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
+    if(x1 < 0){
+        x2 = x1 + x2 -1;
+    }
+    if(y1 < 0){
+        y2 = y1 + y2 -1;
+    }
     for (int y = y1; y <= y2; y++) {
         for (int x = x1; x <= x2; x++) {
-            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
-                (*canvas).pixels[x][y] = '7';
+            if (x <= (*canvas).width +1 && y <= (*canvas).height+1) {
                 if (y == y1 || y == y2 || x == x1 || x == x2) {
                     (*canvas).pixels[x][y] = '7';
                 } else {
@@ -130,6 +172,7 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
     }
     return (*canvas);
 }
+
 
 struct canvas isSTDIN(struct canvas *canvas, enum error *err);
 
@@ -291,22 +334,32 @@ int main(int argc, char* argv[]) {
                 }
             } else if (strcmp(argv[i], "-r") == 0){
                 // parse command line arguments
+                if (!isatty(STDIN_FILENO)){
+                    canvas = isSTDIN(&canvas, &err);
+                    if(err == OK){
+                        can_print_canvas = true;
+                    }
+                }
 
                 int x1, y1, x2, y2;
+                err = OK;
                 if (sscanf(argv[i + 1], "%d,%d,%d,%d", &x1, &y1, &x2, &y2) != 4) {
-                    printf("Error: incorrect value with option -r\n");
-                    return 1;
+                    fprintf(stderr, ERROR_MESSAGE_R);
+                    err = ERR_WITH_VALUE;
+                    can_print_canvas = false;
                 }
                 if (x2 < x1 || y2 < y1 || x2 < 0 || y2 < 0) {
                     printf("Error: incorrect value with option -r\n");
-                    return 1;
+                    fprintf(stderr, ERROR_MESSAGE_R);
+                    err = ERR_WITH_VALUE;
+                    can_print_canvas = false;
                 }
-                can_print_canvas = true;
+
                 canvas = drawRectangle(x1, y1, x2, y2, &canvas);
             }
         }
 
-        if(can_print_canvas){
+        if(can_print_canvas && err == OK){
             print_canvas(canvas);
         }
     }
