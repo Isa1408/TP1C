@@ -118,8 +118,13 @@ void print_canvas(struct canvas canvas) {
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
     for (int y = y1; y <= y2; y++) {
         for (int x = x1; x <= x2; x++) {
-            if (x >= 0 && x < (*canvas).width && y >= 0 && y < (*canvas).height) {
-                (*canvas).pixels[y][x] = '7';
+            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
+                (*canvas).pixels[x][y] = '7';
+                if (y == y1 || y == y2 || x == x1 || x == x2) {
+                    (*canvas).pixels[x][y] = '7';
+                } else {
+                    (*canvas).pixels[x][y] = '.';
+                }
             }
         }
     }
