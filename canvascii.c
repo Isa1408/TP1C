@@ -121,48 +121,11 @@ void print_canvas(struct canvas canvas) {
     }
 }
 
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    for (int y = y1; y <= y2; y++) {
-//        for (int x = x1; x <= x2; x++) {
-//            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
-////                (*canvas).pixels[x][y] = '7';
-//                if (y == y1 || y == y2 || x == x1 || x == x2) {
-//                    (*canvas).pixels[x][y] = '7';
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    for (int x = x1; x <= x2; x++) {
-//        for (int y = y1; y <= y2; y++) {
-//            if (x >= 0 && x <= (*canvas).width +1 && y >= 0 && y <= (*canvas).height+1) {
-//                if (y == y1 || y == y2 || x == x1 || x == x2) {
-//                    (*canvas).pixels[x][y] = '7';
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-    if(x1 < 0){
-        x2 = x1 + x2 -1;
-    }
-    if(y1 < 0){
-        y2 = y1 + y2 -1;
-    }
-    for (int y = y1; y <= y2; y++) {
-        for (int x = x1; x <= x2; x++) {
-            if (x <= (*canvas).width +1 && y <= (*canvas).height+1) {
-                if (y == y1 || y == y2 || x == x1 || x == x2) {
+    for (int x = x1; x < x1 + x2; x++) {
+        for (int y = y1; y < y1 + y2; y++) {
+            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
+                if (y == y1 || y == y1 + y2 - 1 || x == x1 || x == x1 + x2 - 1) {
                     (*canvas).pixels[x][y] = '7';
                 } else {
                     (*canvas).pixels[x][y] = '.';
@@ -172,6 +135,27 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
     }
     return (*canvas);
 }
+
+//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
+//    if(x1 < 0){
+//        x2 = x1 + x2 -1;
+//    }
+//    if(y1 < 0){
+//        y2 = y1 + y2 -1;
+//    }
+//    for (int y = y1; y <= y2; y++) {
+//        for (int x = x1; x <= x2; x++) {
+//            if (x <= (*canvas).width +1 && y <= (*canvas).height+1) {
+//                if (y == y1 || y == y2 || x == x1 || x == x2) {
+//                    (*canvas).pixels[x][y] = '7';
+//                } else {
+//                    (*canvas).pixels[x][y] = '.';
+//                }
+//            }
+//        }
+//    }
+//    return (*canvas);
+//}
 
 
 struct canvas isSTDIN(struct canvas *canvas, enum error *err);
@@ -354,7 +338,6 @@ int main(int argc, char* argv[]) {
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
                 }
-
                 canvas = drawRectangle(x1, y1, x2, y2, &canvas);
             }
         }
