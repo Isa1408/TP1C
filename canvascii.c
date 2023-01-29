@@ -77,6 +77,11 @@ Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
           [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
           [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
 [...]\n"
+#define ERROR_MESSAGE_L "Error: incorrect value with option -l\n\
+Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
+          [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
+          [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
+[...]\n"
 
 
 struct canvas {
@@ -456,7 +461,7 @@ int main(int argc, char* argv[]) {
                     can_print_canvas = false;
                 }
                 if (x2 < x1 || y2 < y1 || x2 < 0 || y2 < 0) {
-                    printf("Error: incorrect value with option -r\n");
+                    // printf("Error: incorrect value with option -r\n");
                     fprintf(stderr, ERROR_MESSAGE_R);
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
@@ -470,23 +475,23 @@ int main(int argc, char* argv[]) {
                         can_print_canvas = true;
                     }
                 }
-                if (argc < 5) {
-                    printf("Not enough arguments provided\n");
-                    return 1;
-                }
+                // if (argc < 5) {
+                //     printf("Not enough arguments provided\n");
+                //     can_print_canvas = false;
+                // }
 
                 int x0, y0, x1, y1;
-                sscanf(argv[i + 1], "%d,%d,%d,%d", &x0, &y0, &x1, &y1);
-                // sscanf(argv[i + 1], "%d", &x0);
-                // sscanf(argv[i + 2], "%d", &y0);
-                // sscanf(argv[i + 3], "%d", &x1);
-                // sscanf(argv[i + 4], "%d", &y1);
-
-                canvas = plotLine(x0, y0, x1, y1, &canvas);
-                can_print_canvas = true;
                 err = OK;
 
-//                return 0;
+                if (sscanf(argv[i + 1], "%d,%d,%d,%d", &x0, &y0, &x1, &y1) != 4) {
+                    fprintf(stderr, ERROR_MESSAGE_L);
+                    err = ERR_WITH_VALUE;
+                    can_print_canvas = false;
+                }
+
+                // sscanf(argv[i + 1], "%d,%d,%d,%d", &x0, &y0, &x1, &y1);
+
+                canvas = plotLine(x0, y0, x1, y1, &canvas);
 
             }
         }
