@@ -127,59 +127,6 @@ void print_canvas(struct canvas canvas) {
     }
 }
 
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    for (int y = y1; y <= y2; y++) {
-//        for (int x = x1; x <= x2; x++) {
-//            if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
-////                (*canvas).pixels[x][y] = '7';
-//                if (y == y1 || y == y2 || x == x1 || x == x2) {
-//                    (*canvas).pixels[x][y] = '7';
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    for (int x = x1; x <= x2; x++) {
-//        for (int y = y1; y <= y2; y++) {
-//            if (x >= 0 && x <= (*canvas).width +1 && y >= 0 && y <= (*canvas).height+1) {
-//                if (y == y1 || y == y2 || x == x1 || x == x2) {
-//                    (*canvas).pixels[x][y] = '7';
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    if(x1 < 0){
-//        x2 = x1 + x2 -1;
-//    }
-//    if(y1 < 0){
-//        y2 = y1 + y2 -1;
-//    }
-//    for (int y = y1; y <= y2; y++) {
-//        for (int x = x1; x <= x2; x++) {
-//            if (x <= (*canvas).width +1 && y <= (*canvas).height+1) {
-//                if (y == y1 || x == x1) {
-//                    (*canvas).pixels[x][y] = '7';
-//                    for (int i = 2)
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
     for (int x = x1; x < x1 + x2; x++) {
         for (int y = y1; y < y1 + y2; y++) {
@@ -194,29 +141,6 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
     }
     return (*canvas);
 }
-
-
-//struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
-//    if(x1 < 0){
-//        x2 = x1 + x2 -1;
-//    }
-//    if(y1 < 0){
-//        y2 = y1 + y2 -1;
-//    }
-//    for (int y = y1; y <= y2; y++) {
-//        for (int x = x1; x <= x2; x++) {
-//            if (x <= (*canvas).width +1 && y <= (*canvas).height+1) {
-//                if (y == y1 || y == y2 || x == x1 || x == x2) {
-//                    (*canvas).pixels[x][y] = '7';
-//                } else {
-//                    (*canvas).pixels[x][y] = '.';
-//                }
-//            }
-//        }
-//    }
-//    return (*canvas);
-//}
-
 
 struct canvas isSTDIN(struct canvas *canvas, enum error *err);
 
@@ -273,56 +197,15 @@ struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
             if (x0 == x1) break;
             error += dy;
             x0 += sx;
-//            if ((x0 >= 0 && x0 <= (*canvas).width) || (y0 >= 0 && y0 <= (*canvas).height)) {
-//                (*canvas).pixels[x0][y0] = '7';
-//            }
         }
         if (e2 <= dx) {
             if (y0 == y1) break;
             error += dx;
             y0 += sy;
-//            if (x0 >= 0 && x0 <= (*canvas).width && y0 >= 0 && y0 <= (*canvas).height) {
-//                (*canvas).pixels[x0][y0] = '7';
-//            }
         }
-
     }
     return(*canvas);
 }
-
-//struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
-//    int dx = abs(x1 - x0);
-//    int sx = x0 < x1 ? 1 : -1;
-//    int dy = -abs(y1 - y0);
-//    int sy = y0 < y1 ? 1 : -1;
-//    int error = dx + dy;
-//
-//    while (1) {
-//        if ((x0 >= 0 && x0 <= (*canvas).width) || (y0 >= 0 && y0 <= (*canvas).height)) {
-//            (*canvas).pixels[x0][y0] = '7';
-//        }
-//        if (x0 == x1 && y0 == y1) break;
-//        int e2 = 2 * error;
-//        if (e2 >= dy) {
-//            if (x0 == x1) break;
-//            error += dy;
-//            x0 += sx;
-//            if ((x0 >= 0 && x0 <= (*canvas).width) || (y0 >= 0 && y0 <= (*canvas).height)) {
-//                (*canvas).pixels[x0][y0] = '7';
-//            }
-//        }
-//        if (e2 <= dx) {
-//            if (y0 == y1) break;
-//            error += dx;
-//            y0 += sy;
-//            if (x0 >= 0 && x0 <= (*canvas).width && y0 >= 0 && y0 <= (*canvas).height) {
-//                (*canvas).pixels[x0][y0] = '7';
-//            }
-//        }
-//
-//    }
-//    return(*canvas);
-//}
 
 int main(int argc, char* argv[]) {
     enum error err;
@@ -333,15 +216,9 @@ int main(int argc, char* argv[]) {
         struct canvas canvas;
         char pen = DEFAULT_PEN;
         int width, height;
-        bool ignore_stdin = false;
         bool can_print_canvas = false;
 
         if(strcmp(argv[1], "-s") == 0){
-//             char line[3];
-//             while(fgets(line, 3, stdin)!= NULL){
-//                 printf("%s", line);
-//             }
-//             err = OK;
             if (!isatty(STDIN_FILENO)){
                 canvas = isSTDIN(&canvas, &err);
 
@@ -354,23 +231,10 @@ int main(int argc, char* argv[]) {
                 if(err == ERR_CANVAS_TOO_WIDE){
                     fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
                 }
-//                err = OK;
-
-//                if(canvas.height > 40){
-//                    canvas.height = 40;
-//                    err = ERR_CANVAS_TOO_HIGH;
-//                }
-//                if(canvas.width > 80){
-//                    canvas.width = 80;
-//                    err = ERR_CANVAS_TOO_WIDE;
-//                }
             }
         }
 
         for (int i = 1; i < argc; i++) {
-//            char line[1000];
-//            printf("%s \n" ,argv[i]);
-
             if (strcmp(argv[i], "-n") == 0 && argc == 2){
                 fprintf(stderr, ERROR_MISSING_N);
                 err = ERR_MISSING_VALUE;
@@ -461,7 +325,6 @@ int main(int argc, char* argv[]) {
                     can_print_canvas = false;
                 }
                 if (x2 < x1 || y2 < y1 || x2 < 0 || y2 < 0) {
-                    // printf("Error: incorrect value with option -r\n");
                     fprintf(stderr, ERROR_MESSAGE_R);
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
@@ -475,10 +338,6 @@ int main(int argc, char* argv[]) {
                         can_print_canvas = true;
                     }
                 }
-                // if (argc < 5) {
-                //     printf("Not enough arguments provided\n");
-                //     can_print_canvas = false;
-                // }
 
                 int x0, y0, x1, y1;
                 err = OK;
@@ -488,8 +347,6 @@ int main(int argc, char* argv[]) {
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
                 }
-
-                // sscanf(argv[i + 1], "%d,%d,%d,%d", &x0, &y0, &x1, &y1);
 
                 canvas = plotLine(x0, y0, x1, y1, &canvas);
 
