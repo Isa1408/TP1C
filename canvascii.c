@@ -82,7 +82,7 @@ Usage: ./canvascii [-n HEIGHT,WIDTH] [-s] [-k] [-p CHAR]\n\
           [-h ROW] [-v COL] [-r ROW,COL,HEIGHT,WIDTH]\n\
           [-l ROW1,COL1,ROW2,COL2] [-c ROW,COL,RADIUS]\n\
 [...]\n"
-
+#define ERROR_MESSAGE_P "Error: incorrect value with option -p\n"
 
 struct canvas {
     char pixels[MAX_HEIGHT][MAX_WIDTH]; // A matrix of pixels
@@ -132,9 +132,7 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
         for (int y = y1; y < y1 + y2; y++) {
             if (x >= 0 && x <= (*canvas).width && y >= 0 && y <= (*canvas).height) {
                 if (y == y1 || y == y1 + y2 - 1 || x == x1 || x == x1 + x2 - 1) {
-                    (*canvas).pixels[x][y] = '7';
-                } else {
-                    (*canvas).pixels[x][y] = '.';
+                    (*canvas).pixels[x][y] = canvas->pen;
                 }
             }
         }
@@ -159,7 +157,7 @@ void count_chars_and_lines(int *line_count, int *char_count) {
 struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
     int line_count, char_count;
     count_chars_and_lines(&line_count, &char_count);
-    (*canvas).pen = '.';
+//    (*canvas).pen = '.';
     (*canvas).height = line_count;
     (*canvas).width = char_count;
 
@@ -174,9 +172,10 @@ struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
 
     for (int i = 0; i < (*canvas).height; i++) {
         for (int j = 0; j < (*canvas).width; j++) {
-            (*canvas).pixels[i][j] = (*canvas).pen;
+            (*canvas).pixels[i][j] = '.';
         }
     }
+
     return (*canvas);
 }
 
@@ -189,7 +188,7 @@ struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
 
     while (1) {
         if ((x0 >= 0 && x0 <= (*canvas).width) || (y0 >= 0 && y0 <= (*canvas).height)) {
-            (*canvas).pixels[x0][y0] = '7';
+            (*canvas).pixels[x0][y0] = canvas->pen;
         }
         if (x0 == x1 && y0 == y1) break;
         int e2 = 2 * error;
@@ -206,6 +205,78 @@ struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
     }
     return(*canvas);
 }
+//struct image {
+//    int width;
+//    int height;
+//    char pixels[][];
+//};
+//
+//typedef struct color_component color_component;
+//
+//void raster_circle(
+//        struct image img,
+//        unsigned int x0,
+//        unsigned int y0,
+//        unsigned int radius,
+//        color_component r,
+//        color_component g,
+//        color_component b );
+//
+//void put_pixel_clip(struct image img, int x, int y, color_component r, color_component g, color_component b)
+//{
+//    if (x >= 0 && x < img.width && y >= 0 && y < img.height)
+//    {
+//        img.pixels[y][x].r = r;
+//        img.pixels[y][x].g = g;
+//        img.pixels[y][x].b = b;
+//    }
+//}
+//
+//
+//#define plot(x, y) put_pixel_clip(img, x, y, r, g, b)
+//
+//void raster_circle(
+//        struct image img,
+//        unsigned int x0,
+//        unsigned int y0,
+//        unsigned int radius,
+//        struct color_component r,
+//        struct color_component g,
+//        struct color_component b )
+//{
+//    int f = 1 - radius;
+//    int ddF_x = 0;
+//    int ddF_y = -2 * radius;
+//    int x = 0;
+//    int y = radius;
+//
+//    plot(x0, y0 + radius);
+//    plot(x0, y0 - radius);
+//    plot(x0 + radius, y0);
+//    plot(x0 - radius, y0);
+//
+//    while(x < y)
+//    {
+//        if(f >= 0)
+//        {
+//            y--;
+//            ddF_y += 2;
+//            f += ddF_y;
+//        }
+//        x++;
+//        ddF_x += 2;
+//        f += ddF_x + 1;
+//        plot(x0 + x, y0 + y);
+//        plot(x0 - x, y0 + y);
+//        plot(x0 + x, y0 - y);
+//        plot(x0 - x, y0 - y);
+//        plot(x0 + y, y0 + x);
+//        plot(x0 - y, y0 + x);
+//        plot(x0 + y, y0 - x);
+//        plot(x0 - y, y0 - x);
+//    }
+//}
+//#undef plot
 
 int main(int argc, char* argv[]) {
     enum error err;
@@ -214,7 +285,8 @@ int main(int argc, char* argv[]) {
         err = OK;
     }else{ //arguments
         struct canvas canvas;
-        char pen = DEFAULT_PEN;
+        canvas.pen = DEFAULT_PEN;
+//        char pen = DEFAULT_PEN;
         int width, height;
         bool can_print_canvas = false;
 
@@ -262,6 +334,7 @@ int main(int argc, char* argv[]) {
                         }
                         err = OK;
                         can_print_canvas = true;
+                        canvas.pen = DEFAULT_PEN;
                     }
                 } else {
                     fprintf(stderr, ERROR_MESSAGE_N);
@@ -285,7 +358,7 @@ int main(int argc, char* argv[]) {
                         return err;
                     }
                     can_print_canvas = true;
-                    canvas = draw_horizontal_line(pen, &canvas, row);
+                    canvas = draw_horizontal_line(canvas.pen, &canvas, row);
                 }
 
             } else if (strcmp(argv[i], "-v") == 0){
@@ -305,7 +378,7 @@ int main(int argc, char* argv[]) {
                         return err;
                     }
                     can_print_canvas = true;
-                    canvas = draw_vertical_line(pen, &canvas, col);
+                    canvas = draw_vertical_line(canvas.pen, &canvas, col);
 
                 }
             } else if (strcmp(argv[i], "-r") == 0){
@@ -329,6 +402,7 @@ int main(int argc, char* argv[]) {
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
                 }
+
                 canvas = drawRectangle(x1, y1, x2, y2, &canvas);
 
             } else if (strcmp(argv[i], "-l") == 0) {
@@ -350,6 +424,23 @@ int main(int argc, char* argv[]) {
 
                 canvas = plotLine(x0, y0, x1, y1, &canvas);
 
+            } else if (strcmp(argv[i], "-c") == 0) {
+
+            } else if (strcmp(argv[i], "-p") == 0) {
+
+                char pen;
+                if (strlen(argv[i + 1]) == 1
+                && sscanf(argv[i + 1], "%c", &pen) == 1
+                && pen >= '0' && pen <= '7') {
+                    canvas.pen = pen;
+                    err = OK;
+                    can_print_canvas = true;
+                } else {
+                    fprintf(stderr, ERROR_MESSAGE_P);
+                    fprintf(stderr, USAGE);
+                    err = ERR_WITH_VALUE;
+                    can_print_canvas = false;
+                }
             }
         }
 
