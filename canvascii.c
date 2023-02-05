@@ -127,6 +127,29 @@ void print_canvas(struct canvas canvas) {
     }
 }
 
+void print_canvas_in_color(struct canvas canvas, int colorCode) {
+    double height = 1;
+    double width = 0.3;
+    for (int i = 0; i < canvas.height; i++) {
+        printf("\033[0;4%dm", colorCode);
+        for (int j = 0; j < canvas.width; j++) {
+//            printf("%c", canvas.pixels[i][j]);
+            printf(" ");
+        }
+        printf("\033[0m\n");
+    }
+
+
+
+//    for (i = 0; i < height; i++) {
+//        printf("\033[0;4%dm", colorCode);
+//        for (j = 0; j < width; j++) {
+//            printf(" ");
+//        }
+//        printf("\033[0m\n");
+//    }
+}
+
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
     for (int x = x1; x < x1 + x2; x++) {
         for (int y = y1; y < y1 + y2; y++) {
@@ -289,6 +312,7 @@ int main(int argc, char* argv[]) {
 //        char pen = DEFAULT_PEN;
         int width, height;
         bool can_print_canvas = false;
+        bool isColor = false;
 
         if(strcmp(argv[1], "-s") == 0){
             if (!isatty(STDIN_FILENO)){
@@ -441,10 +465,29 @@ int main(int argc, char* argv[]) {
                     err = ERR_WITH_VALUE;
                     can_print_canvas = false;
                 }
+            } else if (strcmp(argv[i], "-k") == 0){
+                int colorCode;
+                isColor = true;
+                sscanf(&canvas.pen, "%d", &colorCode);
+                print_canvas_in_color(canvas, colorCode);
+
+
+                int i, j;
+                int colorCode = 1;
+                double height = 1;
+                double width = 0.3;
+
+                for (i = 0; i < height; i++) {
+                    printf("\033[0;4%dm", colorCode);
+                    for (j = 0; j < width; j++) {
+                        printf(" ");
+                    }
+                    printf("\033[0m\n");
+                }
             }
         }
 
-        if(can_print_canvas && err == OK){
+        if(can_print_canvas && err == OK && !isColor){
             print_canvas(canvas);
         }
     }
