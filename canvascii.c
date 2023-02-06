@@ -52,6 +52,8 @@ Drawing options:\n\
 #define ERROR_MESSAGE_L "Error: incorrect value with option -l\n"
 #define ERROR_MESSAGE_P "Error: incorrect value with option -p\n"
 #define ERROR_MESSAGE_NON_RECTANGULAR "Error: canvas should be rectangular\n"
+#define ERROR_MESSAGE_WRONG_PIXEL "Error: wrong pixel value #\n"
+#define ERROR_MESSAGE_UNRECOGNIZED_OPTION "Error: unrecognized option "
 
 struct canvas {
     char pixels[MAX_HEIGHT][MAX_WIDTH]; // A matrix of pixels
@@ -141,6 +143,9 @@ void count_chars_and_lines(int *line_count, int *char_count, enum error *err) {
     *line_count = 0;
     while (fgets(line, sizeof(line), stdin) != NULL) {
         (*line_count)++;
+        if (strstr(line, "#") != NULL) {
+            *err = ERR_WRONG_PIXEL;
+        }
         int len = strcspn(line, "\n");
         if(*char_count != len && *char_count != 0){
             *err = ERR_CANVAS_NON_RECTANGULAR;
@@ -305,6 +310,10 @@ int main(int argc, char* argv[]) {
                     fprintf(stderr, ERROR_MESSAGE_NON_RECTANGULAR);
                     fprintf(stderr, USAGE);
                 }
+                if(err == ERR_WRONG_PIXEL){
+                    fprintf(stderr, ERROR_MESSAGE_WRONG_PIXEL);
+                    fprintf(stderr, USAGE);
+                }
             }
         } else {
             for (int i = 1; i < argc; i++) {
@@ -312,12 +321,14 @@ int main(int argc, char* argv[]) {
                     fprintf(stderr, ERROR_MISSING_N);
                     fprintf(stderr, USAGE);
                     err = ERR_MISSING_VALUE;
+                    break;
                 } else if (strcmp(argv[i], "-n") == 0) {
                     if(sscanf(argv[i + 1], "%d,%d", &height, &width) == 2){
                         if (width > MAX_WIDTH || height > MAX_HEIGHT) {
                             fprintf(stderr, ERROR_MESSAGE_N);
                             fprintf(stderr, USAGE);
                             err = ERR_WITH_VALUE;
+                            break;
                         } else {
                             canvas.pen = '.';
                             canvas.height = height;
@@ -343,6 +354,7 @@ int main(int argc, char* argv[]) {
                         fprintf(stderr, ERROR_MESSAGE_N);
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
+                        break;
                     }
                 } else if (strcmp(argv[i], "-h") == 0) {
                     int row;
@@ -360,7 +372,7 @@ int main(int argc, char* argv[]) {
                             fprintf(stderr, USAGE);
                             can_print_canvas = false;
                             err = ERR_WITH_VALUE;
-                            return err;
+                            break;
                         }
                         can_print_canvas = true;
                         canvas = draw_horizontal_line(canvas.pen, &canvas, row);
@@ -381,7 +393,7 @@ int main(int argc, char* argv[]) {
                             fprintf(stderr, USAGE);
                             can_print_canvas = false;
                             err = ERR_WITH_VALUE;
-                            return err;
+                            break;
                         }
                         can_print_canvas = true;
                         canvas = draw_vertical_line(canvas.pen, &canvas, col);
@@ -403,12 +415,14 @@ int main(int argc, char* argv[]) {
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
                         can_print_canvas = false;
+                        break;
                     }
                     if (x2 < x1 || y2 < y1 || x2 < 0 || y2 < 0) {
                         fprintf(stderr, ERROR_MESSAGE_R);
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
                         can_print_canvas = false;
+                        break;
                     }
 
                     canvas = drawRectangle(x1, y1, x2, y2, &canvas);
@@ -429,6 +443,7 @@ int main(int argc, char* argv[]) {
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
                         can_print_canvas = false;
+                        break;
                     }
 
                     canvas = plotLine(x0, y0, x1, y1, &canvas);
@@ -449,8 +464,10 @@ int main(int argc, char* argv[]) {
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
                         can_print_canvas = false;
+                        break;
                     }
-                } else if (strcmp(argv[i], "-k") == 0){
+                } else if (strcmp(argv[i], "-k" ) == 0){
+
 //                int colorCode;
 //                isColor = true;
 //                sscanf(&canvas.pen, "%d", &colorCode);
@@ -469,6 +486,21 @@ int main(int argc, char* argv[]) {
 //                    }
 //                    printf("\033[0m\n");
 //                }
+                } else {
+                    const char *rejected_chars = "abdefgijmoqtuwxzy";
+                    int j;
+                    for (j = 0; j < strlen(rejected_chars); j++) {
+                        if (strchr(argv[i], rejected_chars[j]) != NULL) {
+                            break;
+                        }
+                    }
+                    if (j < strlen(rejected_chars)) {
+                        fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
+                        fprintf(stderr, USAGE);
+                        err = ERR_UNRECOGNIZED_OPTION;
+                        can_print_canvas = false;
+                        break;
+                    }
                 }
             }
         }
