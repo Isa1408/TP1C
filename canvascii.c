@@ -450,6 +450,7 @@ int main(int argc, char* argv[]) {
 
                 } else if (strcmp(argv[i], "-c") == 0) {
 
+
                 } else if (strcmp(argv[i], "-p") == 0) {
 
                     char pen;
