@@ -187,12 +187,12 @@ struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
     return (*canvas);
 }
 
-struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
-    int dx = abs(x1 - x0);
-    int sx = x0 < x1 ? 1 : -1;
-    int dy = -abs(y1 - y0);
-    int sy = y0 < y1 ? 1 : -1;
-    int error = dx + dy;
+struct canvas draw_segment(struct canvas *canvas, int x0, int y0, int x1, int y1) {
+    int ax = abs(x1 - x0);
+    int bx = x0 < x1 ? 1 : -1;
+    int ay = -abs(y1 - y0);
+    int by = y0 < y1 ? 1 : -1;
+    int error = ax + ay;
 
     while (1) {
         if ((x0 >= 0 && x0 <= (*canvas).width) || (y0 >= 0 && y0 <= (*canvas).height)) {
@@ -200,15 +200,15 @@ struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
         }
         if (x0 == x1 && y0 == y1) break;
         int e2 = 2 * error;
-        if (e2 >= dy) {
+        if (e2 >= ay) {
             if (x0 == x1) break;
-            error += dy;
-            x0 += sx;
+            error += ay;
+            x0 += bx;
         }
-        if (e2 <= dx) {
+        if (e2 <= ax) {
             if (y0 == y1) break;
-            error += dx;
-            y0 += sy;
+            error += ax;
+            y0 += by;
         }
     }
     return(*canvas);
@@ -503,7 +503,7 @@ int main(int argc, char* argv[]) {
                         break;
                     }
 
-                    canvas = plotLine(x0, y0, x1, y1, &canvas);
+                    canvas = draw_segment(&canvas, x0, y0, x1, y1);
 
                 } else if (strcmp(argv[i], "-c") == 0) {
                     if (!isatty(STDIN_FILENO)){
@@ -545,40 +545,44 @@ int main(int argc, char* argv[]) {
                     }
                 } else if (strcmp(argv[i], "-k" ) == 0){
                     isColor = true;
-
-//                int colorCode;
-//                isColor = true;
-//                sscanf(&canvas.pen, "%d", &colorCode);
-//                print_canvas_in_color(canvas, colorCode);
-//
-//
-//                int i, j;
-//                int colorCode = 1;
-//                double height = 1;
-//                double width = 0.3;
-//
-//                for (i = 0; i < height; i++) {
-//                    printf("\033[0;4%dm", colorCode);
-//                    for (j = 0; j < width; j++) {
-//                        printf(" ");
-//                    }
-//                    printf("\033[0m\n");
-//                }
                 } else {
-                    const char *rejected_chars = "abdefgijmoqtuwxzy";
-                    int j;
-                    for (j = 0; j < strlen(rejected_chars); j++) {
-                        if (strchr(argv[i], rejected_chars[j]) != NULL) {
-                            break;
-                        }
-                    }
-                    if (j < strlen(rejected_chars)) {
+
+                    if (!((strchr("-", argv[i - 1][0]) != NULL) && strchr("nskphvrlc", argv[i - 1][1]) != NULL)) {
+
+//                        printf("%s est argv[i]\n", argv[i]);
+//                        printf("%s est argv[i - 1]\n", argv[i - 1]);
                         fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
                         fprintf(stderr, USAGE);
                         err = ERR_UNRECOGNIZED_OPTION;
                         can_print_canvas = false;
                         break;
                     }
+
+
+//                    const char *rejected_chars = "abdefgijmoqtuwxzy";
+//                    int j;
+//                    for (j = 0; j < strlen(rejected_chars); j++) {
+//                        if (strchr(argv[i], rejected_chars[j]) != NULL) {
+//                            break;
+//                        }
+//                    }
+//                    if (j < strlen(rejected_chars)) {
+//                        fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
+//                        fprintf(stderr, USAGE);
+//                        err = ERR_UNRECOGNIZED_OPTION;
+//                        can_print_canvas = false;
+//                        break;
+//                    }
+
+
+//                    bool is_recognized_option(const char *s) {
+//                        if (strlen(s) != 2 || s[0] != '-')
+//                            return false;
+//                        for (char *c = OPTIONS; *c != '\0'; ++c)
+//                            if (s[1] == *c)
+//                                return true;
+//                        return false;
+//                    }
                 }
             }
         }
