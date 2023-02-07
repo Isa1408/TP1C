@@ -51,6 +51,7 @@ Drawing options:\n\
 #define ERROR_MESSAGE_R "Error: incorrect value with option -r\n"
 #define ERROR_MESSAGE_L "Error: incorrect value with option -l\n"
 #define ERROR_MESSAGE_P "Error: incorrect value with option -p\n"
+#define ERROR_MESSAGE_C "Error: incorrect value with option -c\n"
 #define ERROR_MESSAGE_NON_RECTANGULAR "Error: canvas should be rectangular\n"
 #define ERROR_MESSAGE_WRONG_PIXEL "Error: wrong pixel value #\n"
 #define ERROR_MESSAGE_UNRECOGNIZED_OPTION "Error: unrecognized option "
@@ -98,17 +99,24 @@ void print_canvas(struct canvas canvas) {
     }
 }
 
-void print_canvas_in_color(struct canvas canvas, int colorCode) {
-    double height = 1;
-    double width = 0.3;
+void print_canvas_in_color(struct canvas canvas) {
     for (int i = 0; i < canvas.height; i++) {
-        printf("\033[0;4%dm", colorCode);
         for (int j = 0; j < canvas.width; j++) {
-//            printf("%c", canvas.pixels[i][j]);
-            printf(" ");
+            printf("\x1B[4%cm" " " "\x1B[0m", canvas.pixels[i][j]);
         }
-        printf("\033[0m\n");
+        printf("\n");
     }
+//    double height = 1;
+//    double width = 0.3;
+//    for (int i = 0; i < canvas.height; i++) {
+//        printf("\033[0;4%dm", colorCode);
+//        for (int j = 0; j < canvas.width; j++) {
+////            printf("%c", canvas.pixels[i][j]);
+//            printf(" ");
+//        }
+//        printf("\033[0m\n");
+//    }
+
 
 
 
@@ -277,6 +285,55 @@ struct canvas plotLine(int x0, int y0, int x1, int y1, struct canvas *canvas) {
 //    }
 //}
 //#undef plot
+
+void draw_circle_on_canvas(struct canvas *canvas, int r, int c);
+
+struct canvas draw_circle(struct canvas *canvas, int r, int c, int radius) {
+    int f = 1 - radius;
+    int ddfc = 0;
+    int ddfr = -2 * radius;
+    int c2 = 0;
+    int r2 = radius;
+    draw_circle_on_canvas(canvas, r + radius, c);
+    draw_circle_on_canvas(canvas, r - radius, c);
+    draw_circle_on_canvas(canvas, r, c + radius);
+    draw_circle_on_canvas(canvas, r, c - radius);
+    while (c2 < r2) {
+        if (f >= 0) {
+            r2--;
+            ddfr += 2;
+            f += ddfr;
+        }
+        ++c2;
+        ddfc += 2;
+        f += ddfc + 1;
+        draw_circle_on_canvas(canvas, r + r2, c + c2);
+        draw_circle_on_canvas(canvas, r + r2, c - c2);
+        draw_circle_on_canvas(canvas, r - r2, c + c2);
+        draw_circle_on_canvas(canvas, r - r2, c - c2);
+        draw_circle_on_canvas(canvas, r + c2, c + r2);
+        draw_circle_on_canvas(canvas, r + c2, c - r2);
+        draw_circle_on_canvas(canvas, r - c2, c + r2);
+        draw_circle_on_canvas(canvas, r - c2, c - r2);
+    }
+    return (*canvas);
+}
+
+/**
+ * Safely draw a pixel on a canvas
+ *
+ * If `(r,c)` is out of bounds, does nothing.
+ *
+ * @param canvas  The canvas
+ * @param r       The row of the pixel
+ * @param c       The column of the pixel
+ */
+void draw_circle_on_canvas(struct canvas *canvas, int r, int c) {
+    if (r >= 0 && r < (int)canvas->height &&
+        c >= 0 && c < (int)canvas->width)
+        canvas->pixels[r][c] = canvas->pen;
+}
+
 
 int main(int argc, char* argv[]) {
     enum error err = OK;
@@ -449,6 +506,25 @@ int main(int argc, char* argv[]) {
                     canvas = plotLine(x0, y0, x1, y1, &canvas);
 
                 } else if (strcmp(argv[i], "-c") == 0) {
+                    if (!isatty(STDIN_FILENO)){
+                        canvas = isSTDIN(&canvas, &err);
+                        if(err == OK){
+                            can_print_canvas = true;
+                        }
+                    }
+
+                    int r, c, radius;
+                    err = OK;
+
+                    if (sscanf(argv[i + 1], "%d,%d,%d", &r, &c, &radius) != 3) {
+                        fprintf(stderr, ERROR_MESSAGE_C);
+                        fprintf(stderr, USAGE);
+                        err = ERR_WITH_VALUE;
+                        can_print_canvas = false;
+                        break;
+                    }
+
+                    canvas = draw_circle(&canvas, r, c, radius);
 
 
                 } else if (strcmp(argv[i], "-p") == 0) {
@@ -468,6 +544,7 @@ int main(int argc, char* argv[]) {
                         break;
                     }
                 } else if (strcmp(argv[i], "-k" ) == 0){
+                    isColor = true;
 
 //                int colorCode;
 //                isColor = true;
@@ -508,6 +585,9 @@ int main(int argc, char* argv[]) {
 
         if(can_print_canvas && err == OK && !isColor){
             print_canvas(canvas);
+        }
+        if(isColor && err == OK && can_print_canvas){
+            print_canvas_in_color(canvas);
         }
     }
     return err;
