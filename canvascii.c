@@ -213,127 +213,47 @@ struct canvas draw_segment(struct canvas *canvas, int x0, int y0, int x1, int y1
     }
     return(*canvas);
 }
-//struct image {
-//    int width;
-//    int height;
-//    char pixels[][];
-//};
-//
-//typedef struct color_component color_component;
-//
-//void raster_circle(
-//        struct image img,
-//        unsigned int x0,
-//        unsigned int y0,
-//        unsigned int radius,
-//        color_component r,
-//        color_component g,
-//        color_component b );
-//
-//void put_pixel_clip(struct image img, int x, int y, color_component r, color_component g, color_component b)
-//{
-//    if (x >= 0 && x < img.width && y >= 0 && y < img.height)
-//    {
-//        img.pixels[y][x].r = r;
-//        img.pixels[y][x].g = g;
-//        img.pixels[y][x].b = b;
-//    }
-//}
-//
-//
-//#define plot(x, y) put_pixel_clip(img, x, y, r, g, b)
-//
-//void raster_circle(
-//        struct image img,
-//        unsigned int x0,
-//        unsigned int y0,
-//        unsigned int radius,
-//        struct color_component r,
-//        struct color_component g,
-//        struct color_component b )
-//{
-//    int f = 1 - radius;
-//    int ddF_x = 0;
-//    int ddF_y = -2 * radius;
-//    int x = 0;
-//    int y = radius;
-//
-//    plot(x0, y0 + radius);
-//    plot(x0, y0 - radius);
-//    plot(x0 + radius, y0);
-//    plot(x0 - radius, y0);
-//
-//    while(x < y)
-//    {
-//        if(f >= 0)
-//        {
-//            y--;
-//            ddF_y += 2;
-//            f += ddF_y;
-//        }
-//        x++;
-//        ddF_x += 2;
-//        f += ddF_x + 1;
-//        plot(x0 + x, y0 + y);
-//        plot(x0 - x, y0 + y);
-//        plot(x0 + x, y0 - y);
-//        plot(x0 - x, y0 - y);
-//        plot(x0 + y, y0 + x);
-//        plot(x0 - y, y0 + x);
-//        plot(x0 + y, y0 - x);
-//        plot(x0 - y, y0 - x);
-//    }
-//}
-//#undef plot
 
-void draw_circle_on_canvas(struct canvas *canvas, int r, int c);
-
-struct canvas draw_circle(struct canvas *canvas, int r, int c, int radius) {
-    int f = 1 - radius;
-    int ddfc = 0;
-    int ddfr = -2 * radius;
-    int c2 = 0;
-    int r2 = radius;
-    draw_circle_on_canvas(canvas, r + radius, c);
-    draw_circle_on_canvas(canvas, r - radius, c);
-    draw_circle_on_canvas(canvas, r, c + radius);
-    draw_circle_on_canvas(canvas, r, c - radius);
-    while (c2 < r2) {
-        if (f >= 0) {
-            r2--;
-            ddfr += 2;
-            f += ddfr;
-        }
-        ++c2;
-        ddfc += 2;
-        f += ddfc + 1;
-        draw_circle_on_canvas(canvas, r + r2, c + c2);
-        draw_circle_on_canvas(canvas, r + r2, c - c2);
-        draw_circle_on_canvas(canvas, r - r2, c + c2);
-        draw_circle_on_canvas(canvas, r - r2, c - c2);
-        draw_circle_on_canvas(canvas, r + c2, c + r2);
-        draw_circle_on_canvas(canvas, r + c2, c - r2);
-        draw_circle_on_canvas(canvas, r - c2, c + r2);
-        draw_circle_on_canvas(canvas, r - c2, c - r2);
+void delimit_canvas(struct canvas *canvas, int row, int col) {
+    if (row < canvas->height && col < canvas->width && row >= 0 && col >= 0) {
+        canvas->pixels[row][col] = canvas->pen;
     }
-    return (*canvas);
 }
 
-/**
- * Safely draw a pixel on a canvas
- *
- * If `(r,c)` is out of bounds, does nothing.
- *
- * @param canvas  The canvas
- * @param r       The row of the pixel
- * @param c       The column of the pixel
- */
-void draw_circle_on_canvas(struct canvas *canvas, int r, int c) {
-    if (r >= 0 && r < (int)canvas->height &&
-        c >= 0 && c < (int)canvas->width)
-        canvas->pixels[r][c] = canvas->pen;
-}
+struct canvas draw_circle(struct canvas *canvas, int row, int col, int radius) {
+    int f = 1 - radius;
+    int ddF_x = 0;
+    int ddF_y = -2 * radius;
+    int x = 0;
+    int y = radius;
 
+    delimit_canvas(canvas, row, col + radius);
+    delimit_canvas(canvas, row, col - radius);
+    delimit_canvas(canvas, row + radius, col);
+    delimit_canvas(canvas, row - radius, col);
+
+    while(x < y)
+    {
+        if(f >= 0)
+        {
+            y--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x++;
+        ddF_x += 2;
+        f += ddF_x + 1;
+        delimit_canvas(canvas, row + x, col + y);
+        delimit_canvas(canvas, row - x, col + y);
+        delimit_canvas(canvas, row + x, col - y);
+        delimit_canvas(canvas, row - x, col - y);
+        delimit_canvas(canvas, row + y, col + x);
+        delimit_canvas(canvas, row - y, col + x);
+        delimit_canvas(canvas, row + y, col - x);
+        delimit_canvas(canvas, row - y, col - x);
+    }
+    return(*canvas);
+}
 
 int main(int argc, char* argv[]) {
     enum error err = OK;
@@ -513,10 +433,10 @@ int main(int argc, char* argv[]) {
                         }
                     }
 
-                    int r, c, radius;
+                    int row, col, radius;
                     err = OK;
 
-                    if (sscanf(argv[i + 1], "%d,%d,%d", &r, &c, &radius) != 3) {
+                    if (sscanf(argv[i + 1], "%d,%d,%d", &row, &col, &radius) != 3 || radius < 0) {
                         fprintf(stderr, ERROR_MESSAGE_C);
                         fprintf(stderr, USAGE);
                         err = ERR_WITH_VALUE;
@@ -524,8 +444,8 @@ int main(int argc, char* argv[]) {
                         break;
                     }
 
-                    canvas = draw_circle(&canvas, r, c, radius);
-
+//                    canvas = draw_circle(&canvas, row, col, radius);
+                    canvas = draw_circle(&canvas, row, col, radius);
 
                 } else if (strcmp(argv[i], "-p") == 0) {
 
@@ -546,43 +466,13 @@ int main(int argc, char* argv[]) {
                 } else if (strcmp(argv[i], "-k" ) == 0){
                     isColor = true;
                 } else {
-
                     if (!((strchr("-", argv[i - 1][0]) != NULL) && strchr("nskphvrlc", argv[i - 1][1]) != NULL)) {
-
-//                        printf("%s est argv[i]\n", argv[i]);
-//                        printf("%s est argv[i - 1]\n", argv[i - 1]);
                         fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
                         fprintf(stderr, USAGE);
                         err = ERR_UNRECOGNIZED_OPTION;
                         can_print_canvas = false;
                         break;
                     }
-
-
-//                    const char *rejected_chars = "abdefgijmoqtuwxzy";
-//                    int j;
-//                    for (j = 0; j < strlen(rejected_chars); j++) {
-//                        if (strchr(argv[i], rejected_chars[j]) != NULL) {
-//                            break;
-//                        }
-//                    }
-//                    if (j < strlen(rejected_chars)) {
-//                        fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
-//                        fprintf(stderr, USAGE);
-//                        err = ERR_UNRECOGNIZED_OPTION;
-//                        can_print_canvas = false;
-//                        break;
-//                    }
-
-
-//                    bool is_recognized_option(const char *s) {
-//                        if (strlen(s) != 2 || s[0] != '-')
-//                            return false;
-//                        for (char *c = OPTIONS; *c != '\0'; ++c)
-//                            if (s[1] == *c)
-//                                return true;
-//                        return false;
-//                    }
                 }
             }
         }
