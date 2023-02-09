@@ -267,31 +267,32 @@ int main(int argc, char* argv[]) {
         int width, height;
         bool can_print_canvas = false;
         bool isColor = false;
+        bool isN = false;
 
         if(strcmp(argv[1], "-s") == 0){
-            if (!isatty(STDIN_FILENO)){
-                canvas = isSTDIN(&canvas, &err);
+            // if (!isatty(STDIN_FILENO)){
+            canvas = isSTDIN(&canvas, &err);
 
-                if(err == OK){
-                    can_print_canvas = true;
-                }
-                if(err == ERR_CANVAS_TOO_HIGH){
-                    fprintf(stderr, ERROR_MESSAGE_S_TOO_HIGH);
-                    fprintf(stderr, USAGE);
-                }
-                if(err == ERR_CANVAS_TOO_WIDE){
-                    fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
-                    fprintf(stderr, USAGE);
-                }
-                if(err == ERR_CANVAS_NON_RECTANGULAR){
-                    fprintf(stderr, ERROR_MESSAGE_NON_RECTANGULAR);
-                    fprintf(stderr, USAGE);
-                }
-                if(err == ERR_WRONG_PIXEL){
-                    fprintf(stderr, ERROR_MESSAGE_WRONG_PIXEL);
-                    fprintf(stderr, USAGE);
-                }
+            if(err == OK){
+                can_print_canvas = true;
             }
+            if(err == ERR_CANVAS_TOO_HIGH){
+                fprintf(stderr, ERROR_MESSAGE_S_TOO_HIGH);
+                fprintf(stderr, USAGE);
+            }
+            if(err == ERR_CANVAS_TOO_WIDE){
+                fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
+                fprintf(stderr, USAGE);
+            }
+            if(err == ERR_CANVAS_NON_RECTANGULAR){
+                fprintf(stderr, ERROR_MESSAGE_NON_RECTANGULAR);
+                fprintf(stderr, USAGE);
+            }
+            if(err == ERR_WRONG_PIXEL){
+                fprintf(stderr, ERROR_MESSAGE_WRONG_PIXEL);
+                fprintf(stderr, USAGE);
+            }
+            // }
         } else {
             for (int i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-n") == 0 && argc == 2){
@@ -301,6 +302,7 @@ int main(int argc, char* argv[]) {
                     break;
                 } else if (strcmp(argv[i], "-n") == 0) {
                     if(sscanf(argv[i + 1], "%d,%d", &height, &width) == 2){
+                        isN = true;
                         if (width > MAX_WIDTH || height > MAX_HEIGHT) {
                             fprintf(stderr, ERROR_MESSAGE_N);
                             fprintf(stderr, USAGE);
@@ -336,7 +338,7 @@ int main(int argc, char* argv[]) {
                 } else if (strcmp(argv[i], "-h") == 0) {
                     int row;
 
-                    if (!isatty(STDIN_FILENO)){
+                    if (!isN){
                         canvas = isSTDIN(&canvas, &err);
                         if(err == OK){
                             can_print_canvas = true;
@@ -357,7 +359,7 @@ int main(int argc, char* argv[]) {
 
                 } else if (strcmp(argv[i], "-v") == 0){
                     int col;
-                    if (!isatty(STDIN_FILENO)){
+                    if (!isN){
                         canvas = isSTDIN(&canvas, &err);
                         if(err == OK){
                             can_print_canvas = true;
@@ -377,8 +379,7 @@ int main(int argc, char* argv[]) {
 
                     }
                 } else if (strcmp(argv[i], "-r") == 0){
-                    // parse command line arguments
-                    if (!isatty(STDIN_FILENO)){
+                    if (!isN){
                         canvas = isSTDIN(&canvas, &err);
                         if(err == OK){
                             can_print_canvas = true;
@@ -405,7 +406,7 @@ int main(int argc, char* argv[]) {
                     canvas = drawRectangle(x1, y1, x2, y2, &canvas);
 
                 } else if (strcmp(argv[i], "-l") == 0) {
-                    if (!isatty(STDIN_FILENO)){
+                    if (!isN){
                         canvas = isSTDIN(&canvas, &err);
                         if(err == OK){
                             can_print_canvas = true;
@@ -426,7 +427,7 @@ int main(int argc, char* argv[]) {
                     canvas = draw_segment(&canvas, x0, y0, x1, y1);
 
                 } else if (strcmp(argv[i], "-c") == 0) {
-                    if (!isatty(STDIN_FILENO)){
+                    if (!isN){
                         canvas = isSTDIN(&canvas, &err);
                         if(err == OK){
                             can_print_canvas = true;
