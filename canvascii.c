@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include <stdlib.h>
 
 #define MAX_HEIGHT 40
@@ -106,27 +105,6 @@ void print_canvas_in_color(struct canvas canvas) {
         }
         printf("\n");
     }
-//    double height = 1;
-//    double width = 0.3;
-//    for (int i = 0; i < canvas.height; i++) {
-//        printf("\033[0;4%dm", colorCode);
-//        for (int j = 0; j < canvas.width; j++) {
-////            printf("%c", canvas.pixels[i][j]);
-//            printf(" ");
-//        }
-//        printf("\033[0m\n");
-//    }
-
-
-
-
-//    for (i = 0; i < height; i++) {
-//        printf("\033[0;4%dm", colorCode);
-//        for (j = 0; j < width; j++) {
-//            printf(" ");
-//        }
-//        printf("\033[0m\n");
-//    }
 }
 
 struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canvas) {
@@ -144,12 +122,26 @@ struct canvas drawRectangle(int x1, int y1, int x2, int y2, struct canvas *canva
 
 struct canvas isSTDIN(struct canvas *canvas, enum error *err);
 
+void verify_N(enum error *err, bool isN, struct canvas *canvas, bool *can_print_canvas) {
+    if (!isN){
+        (*canvas) = isSTDIN(canvas, err);
+        if((*err) == OK){
+            (*can_print_canvas) = true;
+        }
+    }
+}
+
 void count_chars_and_lines(int *line_count, int *char_count, enum error *err) {
     char line[4000];
 
     *char_count = 0;
     *line_count = 0;
+
     while (fgets(line, sizeof(line), stdin) != NULL) {
+        if (ferror(stdin)) {
+            printf("Error reading from stdin\n");
+            break;
+        }
         (*line_count)++;
         if (strstr(line, "#") != NULL) {
             *err = ERR_WRONG_PIXEL;
@@ -165,7 +157,6 @@ void count_chars_and_lines(int *line_count, int *char_count, enum error *err) {
 struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
     int line_count, char_count;
     count_chars_and_lines(&line_count, &char_count, err);
-//    (*canvas).pen = '.';
     (*canvas).height = line_count;
     (*canvas).width = char_count;
 
@@ -185,6 +176,51 @@ struct canvas isSTDIN(struct canvas *canvas, enum error *err) {
     }
 
     return (*canvas);
+}
+
+bool getErrValue(enum error *err, bool *can_print_canvas) {
+    if((*err) == OK){
+        *can_print_canvas = true;
+    }
+    if((*err) == ERR_CANVAS_TOO_HIGH){
+        fprintf(stderr, ERROR_MESSAGE_S_TOO_HIGH);
+        fprintf(stderr, USAGE);
+    }
+    if((*err) == ERR_CANVAS_TOO_WIDE){
+        fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
+        fprintf(stderr, USAGE);
+    }
+    if((*err) == ERR_CANVAS_NON_RECTANGULAR){
+        fprintf(stderr, ERROR_MESSAGE_NON_RECTANGULAR);
+        fprintf(stderr, USAGE);
+    }
+    if((*err) == ERR_WRONG_PIXEL){
+        fprintf(stderr, ERROR_MESSAGE_WRONG_PIXEL);
+        fprintf(stderr, USAGE);
+    }
+    return can_print_canvas;
+}
+
+void draw_empty_canvas(int width, int height, enum error *err, struct canvas *canvas, bool *can_print_canvas) {
+    (*canvas).pen = '.';
+    (*canvas).height = height;
+    (*canvas).width = width;
+    if((*canvas).height > 40){
+        (*canvas).height = 40;
+        (*err) = ERR_CANVAS_TOO_HIGH;
+    }
+    if((*canvas).width > 80){
+        (*canvas).width = 80;
+        (*err) = ERR_CANVAS_TOO_WIDE;
+    }
+    for (int a = 0; a < (*canvas).height; a++) {
+        for (int b = 0; b < (*canvas).width ; b++) {
+            (*canvas).pixels[a][b] = (*canvas).pen;
+        }
+    }
+    (*err) = OK;
+    (*can_print_canvas) = true;
+    (*canvas).pen = DEFAULT_PEN;
 }
 
 struct canvas draw_segment(struct canvas *canvas, int x0, int y0, int x1, int y1) {
@@ -255,44 +291,23 @@ struct canvas draw_circle(struct canvas *canvas, int row, int col, int radius) {
     return(*canvas);
 }
 
+
 int main(int argc, char* argv[]) {
     enum error err = OK;
-    if (argc == 1) { //imprime manuel
+    if (argc == 1) {
         puts(USAGE);
         err = OK;
-    }else{ //arguments
+    }else{
         struct canvas canvas;
         canvas.pen = DEFAULT_PEN;
-//        char pen = DEFAULT_PEN;
         int width, height;
         bool can_print_canvas = false;
         bool isColor = false;
         bool isN = false;
 
         if(strcmp(argv[1], "-s") == 0){
-            // if (!isatty(STDIN_FILENO)){
             canvas = isSTDIN(&canvas, &err);
-
-            if(err == OK){
-                can_print_canvas = true;
-            }
-            if(err == ERR_CANVAS_TOO_HIGH){
-                fprintf(stderr, ERROR_MESSAGE_S_TOO_HIGH);
-                fprintf(stderr, USAGE);
-            }
-            if(err == ERR_CANVAS_TOO_WIDE){
-                fprintf(stderr, ERROR_MESSAGE_S_TOO_WIDE);
-                fprintf(stderr, USAGE);
-            }
-            if(err == ERR_CANVAS_NON_RECTANGULAR){
-                fprintf(stderr, ERROR_MESSAGE_NON_RECTANGULAR);
-                fprintf(stderr, USAGE);
-            }
-            if(err == ERR_WRONG_PIXEL){
-                fprintf(stderr, ERROR_MESSAGE_WRONG_PIXEL);
-                fprintf(stderr, USAGE);
-            }
-            // }
+            can_print_canvas = getErrValue(&err, &can_print_canvas);
         } else {
             for (int i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-n") == 0 && argc == 2){
@@ -309,25 +324,7 @@ int main(int argc, char* argv[]) {
                             err = ERR_WITH_VALUE;
                             break;
                         } else {
-                            canvas.pen = '.';
-                            canvas.height = height;
-                            canvas.width = width;
-                            if(canvas.height > 40){
-                                canvas.height = 40;
-                                err = ERR_CANVAS_TOO_HIGH;
-                            }
-                            if(canvas.width > 80){
-                                canvas.width = 80;
-                                err = ERR_CANVAS_TOO_WIDE;
-                            }
-                            for (int a = 0; a < canvas.height; a++) {
-                                for (int b = 0; b < canvas.width ; b++) {
-                                    canvas.pixels[a][b] = canvas.pen;
-                                }
-                            }
-                            err = OK;
-                            can_print_canvas = true;
-                            canvas.pen = DEFAULT_PEN;
+                            draw_empty_canvas(width, height, &err, &canvas, &can_print_canvas);
                         }
                     } else {
                         fprintf(stderr, ERROR_MESSAGE_N);
@@ -337,13 +334,7 @@ int main(int argc, char* argv[]) {
                     }
                 } else if (strcmp(argv[i], "-h") == 0) {
                     int row;
-
-                    if (!isN){
-                        canvas = isSTDIN(&canvas, &err);
-                        if(err == OK){
-                            can_print_canvas = true;
-                        }
-                    }
+                    verify_N(&err, isN, &canvas, &can_print_canvas);
 
                     if (sscanf(argv[i + 1], "%d", &row) == 1 && can_print_canvas) {
                         if (row < 0 || row >= canvas.width) {
@@ -359,12 +350,7 @@ int main(int argc, char* argv[]) {
 
                 } else if (strcmp(argv[i], "-v") == 0){
                     int col;
-                    if (!isN){
-                        canvas = isSTDIN(&canvas, &err);
-                        if(err == OK){
-                            can_print_canvas = true;
-                        }
-                    }
+                    verify_N(&err, isN, &canvas, &can_print_canvas);
 
                     if (sscanf(argv[i + 1], "%d", &col) == 1) {
                         if (col < 0 || col >= canvas.height) {
@@ -379,12 +365,7 @@ int main(int argc, char* argv[]) {
 
                     }
                 } else if (strcmp(argv[i], "-r") == 0){
-                    if (!isN){
-                        canvas = isSTDIN(&canvas, &err);
-                        if(err == OK){
-                            can_print_canvas = true;
-                        }
-                    }
+                    verify_N(&err, isN, &canvas, &can_print_canvas);
 
                     int x1, y1, x2, y2;
                     err = OK;
@@ -406,12 +387,7 @@ int main(int argc, char* argv[]) {
                     canvas = drawRectangle(x1, y1, x2, y2, &canvas);
 
                 } else if (strcmp(argv[i], "-l") == 0) {
-                    if (!isN){
-                        canvas = isSTDIN(&canvas, &err);
-                        if(err == OK){
-                            can_print_canvas = true;
-                        }
-                    }
+                    verify_N(&err, isN, &canvas, &can_print_canvas);
 
                     int x0, y0, x1, y1;
                     err = OK;
@@ -427,12 +403,7 @@ int main(int argc, char* argv[]) {
                     canvas = draw_segment(&canvas, x0, y0, x1, y1);
 
                 } else if (strcmp(argv[i], "-c") == 0) {
-                    if (!isN){
-                        canvas = isSTDIN(&canvas, &err);
-                        if(err == OK){
-                            can_print_canvas = true;
-                        }
-                    }
+                    verify_N(&err, isN, &canvas, &can_print_canvas);
 
                     int row, col, radius;
                     err = OK;
@@ -445,11 +416,9 @@ int main(int argc, char* argv[]) {
                         break;
                     }
 
-//                    canvas = draw_circle(&canvas, row, col, radius);
                     canvas = draw_circle(&canvas, row, col, radius);
 
                 } else if (strcmp(argv[i], "-p") == 0) {
-
                     char pen;
                     if (strlen(argv[i + 1]) == 1
                         && sscanf(argv[i + 1], "%c", &pen) == 1
@@ -467,7 +436,8 @@ int main(int argc, char* argv[]) {
                 } else if (strcmp(argv[i], "-k" ) == 0){
                     isColor = true;
                 } else {
-                    if (!((strchr("-", argv[i - 1][0]) != NULL) && strchr("nskphvrlc", argv[i - 1][1]) != NULL)) {
+                    if (!((strchr("-", argv[i - 1][0]) != NULL)
+                    && strchr("nskphvrlc", argv[i - 1][1]) != NULL)) {
                         fprintf(stderr, ERROR_MESSAGE_UNRECOGNIZED_OPTION "%s\n", argv[i]);
                         fprintf(stderr, USAGE);
                         err = ERR_UNRECOGNIZED_OPTION;
@@ -487,3 +457,9 @@ int main(int argc, char* argv[]) {
     }
     return err;
 }
+
+
+
+
+
+
